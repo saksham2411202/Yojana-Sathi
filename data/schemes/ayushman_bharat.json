@@ -1,0 +1,33 @@
+{
+  "id": "ayushman_bharat",
+  "name_en": "Ayushman Bharat PM-JAY",
+  "name_hi": "आयुष्मान भारत प्रधानमंत्री जन आरोग्य योजना",
+  "name_ta": "ஆயுஷ்மான் பாரத் பிரதமர் ஜன் ஆரோக்கிய யோஜனா",
+  "description_en": "World's largest health assurance scheme providing health cover of Rs. 5 lakh per family per year for secondary and tertiary care hospitalisation to economically weaker sections.",
+  "description_hi": "विश्व की सबसे बड़ी स्वास्थ्य बीमा योजना जो आर्थिक रूप से कमजोर वर्गों को द्वितीयक और तृतीयक देखभाल अस्पताल में भर्ती के लिए प्रति परिवार प्रति वर्ष 5 लाख रुपये का स्वास्थ्य कवर प्रदान करती है।",
+  "description_ta": "பொருளாதாரத்தில் பின்தங்கிய பிரிவினருக்கு இரண்டாம் நிலை மற்றும் மூன்றாம் நிலை மருத்துவமனை சேர்க்கைக்கு குடும்பத்திற்கு ஆண்டுக்கு ரூ. 5 லட்சம் சுகாதார காப்பீடு வழங்கும் உலகின் மிகப்பெரிய சுகாதார உத்தரவாத திட்டம்.",
+  "category": "HEALTH",
+  "source_url": "https://pmjay.gov.in",
+  "last_verified": "2024-10-01",
+  "benefit_en": "Health cover of Rs. 5 lakh per family per year for hospitalisation",
+  "required_documents": [
+    "Aadhaar Card",
+    "Ration Card (BPL/SECC listed)",
+    "Income Certificate",
+    "PM-JAY e-Card (generated at empanelled hospital)"
+  ],
+  "rules": {
+    "logic": "OR",
+    "conditions": [
+      {"field": "is_bpl", "op": "eq", "value": true},
+      {
+        "logic": "AND",
+        "conditions": [
+          {"field": "annual_income_inr", "op": "lte", "value": 500000},
+          {"field": "occupation", "op": "in", "value": ["FARMER", "UNEMPLOYED", "SELF_EMPLOYED"]}
+        ]
+      }
+    ]
+  },
+  "is_active": true
+}

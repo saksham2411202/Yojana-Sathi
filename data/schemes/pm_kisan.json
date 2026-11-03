@@ -1,0 +1,28 @@
+{
+  "id": "pm_kisan",
+  "name_en": "PM-KISAN Samman Nidhi",
+  "name_hi": "पीएम किसान सम्मान निधि",
+  "name_ta": "பிஎம்-கிசான் சம்மான் நிதி",
+  "description_en": "Direct income support of Rs. 6,000 per year in three equal installments to small and marginal farmers who own cultivable land up to 2 hectares.",
+  "description_hi": "2 हेक्टेयर तक कृषि योग्य भूमि रखने वाले छोटे और सीमांत किसानों को प्रति वर्ष तीन समान किस्तों में 6,000 रुपये की प्रत्यक्ष आय सहायता।",
+  "description_ta": "2 ஹெக்டேர் வரை சாகுபடி நிலம் வைத்திருக்கும் சிறு மற்றும் குறு விவசாயிகளுக்கு ஆண்டுக்கு மூன்று சம தவணைகளில் ரூ. 6,000 நேரடி வருமான ஆதரவு.",
+  "category": "FARMING",
+  "source_url": "https://pmkisan.gov.in",
+  "last_verified": "2024-10-01",
+  "benefit_en": "Rs. 6,000 per year (Rs. 2,000 per installment, 3 installments)",
+  "required_documents": [
+    "Aadhaar Card",
+    "Land ownership records (Khatian/Patta)",
+    "Bank account passbook",
+    "Self-declaration of land holding"
+  ],
+  "rules": {
+    "logic": "AND",
+    "conditions": [
+      {"field": "occupation", "op": "eq", "value": "FARMER"},
+      {"field": "land_holding_acres", "op": "lte", "value": 4.94},
+      {"field": "has_bank_account", "op": "eq", "value": true}
+    ]
+  },
+  "is_active": true
+}

@@ -1,0 +1,31 @@
+{
+  "id": "pm_scholarship",
+  "name_en": "Prime Minister's Scholarship Scheme (PMSS)",
+  "name_hi": "प्रधानमंत्री छात्रवृत्ति योजना",
+  "name_ta": "பிரதம மந்திரி உதவித்தொகை திட்டம்",
+  "description_en": "Scholarship scheme for wards and widows of Ex-Servicemen/Ex-Coast Guard personnel pursuing professional degree courses. Also open to children of Central Armed Police Forces (CAPF) martyrs.",
+  "description_hi": "पेशेवर डिग्री पाठ्यक्रम करने वाले पूर्व सैनिकों/पूर्व तटरक्षक कर्मियों के वार्डों और विधवाओं के लिए छात्रवृत्ति योजना।",
+  "description_ta": "தொழில்முறை பட்டப்படிப்பு படிக்கும் முன்னாள் ராணுவ வீரர்கள்/கடலோர காவல்படை வீரர்களின் குழந்தைகளுக்கு உதவித்தொகை திட்டம்.",
+  "category": "EDUCATION",
+  "source_url": "https://scholarships.gov.in/public/schemeGuidelines/pmss_guidelines.pdf",
+  "last_verified": "2024-09-01",
+  "benefit_en": "Rs. 2,500/month for boys and Rs. 3,000/month for girls pursuing professional degrees",
+  "required_documents": [
+    "Ex-Serviceman PPO / Discharge Book",
+    "Bonafide certificate from institution",
+    "Aadhaar Card",
+    "Bank account passbook",
+    "10th/12th marksheet",
+    "Income certificate (if applicable)"
+  ],
+  "rules": {
+    "logic": "AND",
+    "conditions": [
+      {"field": "occupation", "op": "eq", "value": "STUDENT"},
+      {"field": "education_level", "op": "in", "value": ["HIGHER_SECONDARY", "GRADUATE"]},
+      {"field": "age", "op": "lte", "value": 25},
+      {"field": "age", "op": "gte", "value": 17}
+    ]
+  },
+  "is_active": true
+}

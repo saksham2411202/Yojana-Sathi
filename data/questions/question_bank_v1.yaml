@@ -1,0 +1,373 @@
+version: 1
+# Question Bank v1 — Human-reviewed translations: en, hi, ta
+# Each question maps to exactly one UserProfile field.
+# No live LLM translation. This file is the source of truth.
+
+questions:
+
+  - id: q_occupation
+    version: 1
+    profile_field: occupation
+    priority: 10
+    question_type: single_choice
+    applicable_needs: []
+    show_if: null
+    text_translations:
+      en: "What is your main occupation?"
+      hi: "आपका मुख्य व्यवसाय क्या है?"
+      ta: "உங்கள் முக்கிய தொழில் என்ன?"
+    options:
+      - value: FARMER
+        maps_to: FARMER
+        label_translations:
+          en: "Farmer / Agricultural worker"
+          hi: "किसान / कृषि श्रमिक"
+          ta: "விவசாயி / விவசாய தொழிலாளர்"
+      - value: STUDENT
+        maps_to: STUDENT
+        label_translations:
+          en: "Student"
+          hi: "छात्र"
+          ta: "மாணவர்"
+      - value: GOVT_EMPLOYEE
+        maps_to: GOVT_EMPLOYEE
+        label_translations:
+          en: "Government employee"
+          hi: "सरकारी कर्मचारी"
+          ta: "அரசு ஊழியர்"
+      - value: PRIVATE
+        maps_to: PRIVATE
+        label_translations:
+          en: "Private sector employee"
+          hi: "निजी क्षेत्र के कर्मचारी"
+          ta: "தனியார் துறை ஊழியர்"
+      - value: SELF_EMPLOYED
+        maps_to: SELF_EMPLOYED
+        label_translations:
+          en: "Self-employed / Business"
+          hi: "स्वरोजगार / व्यवसाय"
+          ta: "சுய தொழில் / வணிகம்"
+      - value: UNEMPLOYED
+        maps_to: UNEMPLOYED
+        label_translations:
+          en: "Unemployed / Looking for work"
+          hi: "बेरोजगार / काम की तलाश"
+          ta: "வேலையற்றவர் / வேலை தேடுகிறார்"
+      - value: UNKNOWN
+        maps_to: UNKNOWN
+        label_translations:
+          en: "Prefer not to say"
+          hi: "बताना नहीं चाहता"
+          ta: "சொல்ல விரும்பவில்லை"
+
+  - id: q_age
+    version: 1
+    profile_field: age
+    priority: 20
+    question_type: numeric
+    applicable_needs: []
+    show_if: null
+    text_translations:
+      en: "How old are you? (Enter your age in years)"
+      hi: "आपकी आयु कितनी है? (वर्षों में दर्ज करें)"
+      ta: "உங்கள் வயது என்ன? (வருடங்களில் உள்ளிடவும்)"
+    options: []
+
+  - id: q_gender
+    version: 1
+    profile_field: gender
+    priority: 30
+    question_type: single_choice
+    applicable_needs: []
+    show_if: null
+    text_translations:
+      en: "What is your gender?"
+      hi: "आपका लिंग क्या है?"
+      ta: "உங்கள் பாலினம் என்ன?"
+    options:
+      - value: MALE
+        maps_to: MALE
+        label_translations:
+          en: "Male"
+          hi: "पुरुष"
+          ta: "ஆண்"
+      - value: FEMALE
+        maps_to: FEMALE
+        label_translations:
+          en: "Female"
+          hi: "महिला"
+          ta: "பெண்"
+      - value: OTHER
+        maps_to: OTHER
+        label_translations:
+          en: "Other / Non-binary"
+          hi: "अन्य / गैर-बाइनरी"
+          ta: "மற்றவை / நான்-பைனரி"
+      - value: UNKNOWN
+        maps_to: UNKNOWN
+        label_translations:
+          en: "Prefer not to say"
+          hi: "बताना नहीं चाहता"
+          ta: "சொல்ல விரும்பவில்லை"
+
+  - id: q_annual_income
+    version: 1
+    profile_field: annual_income_inr
+    priority: 40
+    question_type: single_choice
+    applicable_needs: []
+    show_if: null
+    text_translations:
+      en: "What is your approximate annual household income?"
+      hi: "आपकी अनुमानित वार्षिक घरेलू आय क्या है?"
+      ta: "உங்கள் தோராயமான ஆண்டு குடும்ப வருமானம் என்ன?"
+    options:
+      - value: "50000"
+        maps_to: 50000
+        label_translations:
+          en: "Below Rs. 50,000"
+          hi: "50,000 रुपये से कम"
+          ta: "ரூ. 50,000க்கும் குறைவாக"
+      - value: "120000"
+        maps_to: 120000
+        label_translations:
+          en: "Rs. 50,000 – Rs. 1,20,000"
+          hi: "50,000 – 1,20,000 रुपये"
+          ta: "ரூ. 50,000 – ரூ. 1,20,000"
+      - value: "300000"
+        maps_to: 300000
+        label_translations:
+          en: "Rs. 1,20,000 – Rs. 3,00,000"
+          hi: "1,20,000 – 3,00,000 रुपये"
+          ta: "ரூ. 1,20,000 – ரூ. 3,00,000"
+      - value: "500000"
+        maps_to: 500000
+        label_translations:
+          en: "Rs. 3,00,000 – Rs. 5,00,000"
+          hi: "3,00,000 – 5,00,000 रुपये"
+          ta: "ரூ. 3,00,000 – ரூ. 5,00,000"
+      - value: "1000000"
+        maps_to: 1000000
+        label_translations:
+          en: "Above Rs. 5,00,000"
+          hi: "5,00,000 रुपये से अधिक"
+          ta: "ரூ. 5,00,000க்கும் அதிகமாக"
+
+  - id: q_is_bpl
+    version: 1
+    profile_field: is_bpl
+    priority: 50
+    question_type: single_choice
+    applicable_needs: []
+    show_if: null
+    text_translations:
+      en: "Do you have a Below Poverty Line (BPL) ration card?"
+      hi: "क्या आपके पास गरीबी रेखा से नीचे (बीपीएल) राशन कार्ड है?"
+      ta: "உங்களிடம் வறுமை கோட்டிற்கு கீழ் (BPL) ரேஷன் கார்டு உள்ளதா?"
+    options:
+      - value: "true"
+        maps_to: true
+        label_translations:
+          en: "Yes, I have a BPL card"
+          hi: "हाँ, मेरे पास बीपीएल कार्ड है"
+          ta: "ஆம், என்னிடம் BPL அட்டை உள்ளது"
+      - value: "false"
+        maps_to: false
+        label_translations:
+          en: "No, I don't have a BPL card"
+          hi: "नहीं, मेरे पास बीपीएल कार्ड नहीं है"
+          ta: "இல்லை, என்னிடம் BPL அட்டை இல்லை"
+      - value: "UNKNOWN"
+        maps_to: null
+        label_translations:
+          en: "I'm not sure"
+          hi: "मुझे पता नहीं"
+          ta: "எனக்குத் தெரியவில்லை"
+
+  - id: q_land_holding
+    version: 1
+    profile_field: land_holding_acres
+    priority: 60
+    question_type: single_choice
+    applicable_needs: [farming]
+    show_if:
+      field: occupation
+      op: eq
+      value: FARMER
+    text_translations:
+      en: "How much agricultural land do you own?"
+      hi: "आपके पास कितनी कृषि भूमि है?"
+      ta: "உங்களிடம் எவ்வளவு விவசாய நிலம் உள்ளது?"
+    options:
+      - value: "1.0"
+        maps_to: 1.0
+        label_translations:
+          en: "Less than 1 acre"
+          hi: "1 एकड़ से कम"
+          ta: "1 ஏக்கருக்கும் குறைவாக"
+      - value: "2.5"
+        maps_to: 2.5
+        label_translations:
+          en: "1–2.5 acres"
+          hi: "1–2.5 एकड़"
+          ta: "1–2.5 ஏக்கர்"
+      - value: "4.94"
+        maps_to: 4.94
+        label_translations:
+          en: "2.5–5 acres (up to 2 hectares)"
+          hi: "2.5–5 एकड़ (2 हेक्टेयर तक)"
+          ta: "2.5–5 ஏக்கர் (2 ஹெக்டேர் வரை)"
+      - value: "10.0"
+        maps_to: 10.0
+        label_translations:
+          en: "More than 5 acres"
+          hi: "5 एकड़ से अधिक"
+          ta: "5 ஏக்கருக்கும் அதிகம்"
+
+  - id: q_has_bank_account
+    version: 1
+    profile_field: has_bank_account
+    priority: 70
+    question_type: single_choice
+    applicable_needs: []
+    show_if: null
+    text_translations:
+      en: "Do you have a bank account in your name?"
+      hi: "क्या आपके नाम पर बैंक खाता है?"
+      ta: "உங்கள் பெயரில் வங்கி கணக்கு உள்ளதா?"
+    options:
+      - value: "true"
+        maps_to: true
+        label_translations:
+          en: "Yes"
+          hi: "हाँ"
+          ta: "ஆம்"
+      - value: "false"
+        maps_to: false
+        label_translations:
+          en: "No"
+          hi: "नहीं"
+          ta: "இல்லை"
+
+  - id: q_caste_category
+    version: 1
+    profile_field: caste_category
+    priority: 80
+    question_type: single_choice
+    applicable_needs: []
+    show_if: null
+    text_translations:
+      en: "What is your caste category?"
+      hi: "आपकी जाति श्रेणी क्या है?"
+      ta: "உங்கள் சாதி வகை என்ன?"
+    options:
+      - value: GENERAL
+        maps_to: GENERAL
+        label_translations:
+          en: "General / Unreserved"
+          hi: "सामान्य / अनारक्षित"
+          ta: "பொது / ஒதுக்கீடு இல்லாதவர்"
+      - value: OBC
+        maps_to: OBC
+        label_translations:
+          en: "OBC (Other Backward Class)"
+          hi: "ओबीसी (अन्य पिछड़ा वर्ग)"
+          ta: "OBC (பிற பிற்படுத்தப்பட்ட வகுப்பு)"
+      - value: SC
+        maps_to: SC
+        label_translations:
+          en: "SC (Scheduled Caste)"
+          hi: "एससी (अनुसूचित जाति)"
+          ta: "SC (பட்டியல் சாதி)"
+      - value: ST
+        maps_to: ST
+        label_translations:
+          en: "ST (Scheduled Tribe)"
+          hi: "एसटी (अनुसूचित जनजाति)"
+          ta: "ST (பட்டியல் பழங்குடியினர்)"
+      - value: UNKNOWN
+        maps_to: UNKNOWN
+        label_translations:
+          en: "Prefer not to say"
+          hi: "बताना नहीं चाहता"
+          ta: "சொல்ல விரும்பவில்லை"
+
+  - id: q_education_level
+    version: 1
+    profile_field: education_level
+    priority: 90
+    question_type: single_choice
+    applicable_needs: [education]
+    show_if: null
+    text_translations:
+      en: "What is your highest level of education?"
+      hi: "आपकी उच्चतम शिक्षा क्या है?"
+      ta: "உங்களின் உயர்ந்த கல்வி தகுதி என்ன?"
+    options:
+      - value: NONE
+        maps_to: NONE
+        label_translations:
+          en: "No formal education"
+          hi: "कोई औपचारिक शिक्षा नहीं"
+          ta: "முறையான கல்வி இல்லை"
+      - value: PRIMARY
+        maps_to: PRIMARY
+        label_translations:
+          en: "Primary (Class 1–5)"
+          hi: "प्राथमिक (कक्षा 1–5)"
+          ta: "தொடக்க (வகுப்பு 1–5)"
+      - value: SECONDARY
+        maps_to: SECONDARY
+        label_translations:
+          en: "Secondary (Class 6–10)"
+          hi: "माध्यमिक (कक्षा 6–10)"
+          ta: "இடைநிலை (வகுப்பு 6–10)"
+      - value: HIGHER_SECONDARY
+        maps_to: HIGHER_SECONDARY
+        label_translations:
+          en: "Higher Secondary (Class 11–12 / PUC)"
+          hi: "उच्चतर माध्यमिक (कक्षा 11–12)"
+          ta: "மேல்நிலை (வகுப்பு 11–12)"
+      - value: GRADUATE
+        maps_to: GRADUATE
+        label_translations:
+          en: "Graduate or above"
+          hi: "स्नातक या उससे ऊपर"
+          ta: "பட்டதாரி அல்லது அதற்கு மேல்"
+      - value: UNKNOWN
+        maps_to: UNKNOWN
+        label_translations:
+          en: "Prefer not to say"
+          hi: "बताना नहीं चाहता"
+          ta: "சொல்ல விரும்பவில்லை"
+
+  - id: q_disability_status
+    version: 1
+    profile_field: disability_status
+    priority: 100
+    question_type: single_choice
+    applicable_needs: []
+    show_if: null
+    text_translations:
+      en: "Do you have any disability?"
+      hi: "क्या आपके पास कोई विकलांगता है?"
+      ta: "உங்களுக்கு ஏதேனும் மாற்றுத்திறனாளி நிலை உள்ளதா?"
+    options:
+      - value: "true"
+        maps_to: true
+        label_translations:
+          en: "Yes, I have a disability"
+          hi: "हाँ, मुझे विकलांगता है"
+          ta: "ஆம், எனக்கு மாற்றுத்திறன் உள்ளது"
+      - value: "false"
+        maps_to: false
+        label_translations:
+          en: "No"
+          hi: "नहीं"
+          ta: "இல்லை"
+      - value: "UNKNOWN"
+        maps_to: null
+        label_translations:
+          en: "Prefer not to say"
+          hi: "बताना नहीं चाहता"
+          ta: "சொல்ல விரும்பவில்லை"
