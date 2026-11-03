@@ -4,21 +4,20 @@ from __future__ import annotations
 import os
 from logging.config import fileConfig
 
-from sqlalchemy import MetaData, engine_from_config, pool
-
 from alembic import context
+from sqlalchemy import engine_from_config, pool
+
+from app.core.config import settings
+from app.models.base import Base
 
 config = context.config
 
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-# No ORM models yet — use empty metadata.
-# When models are added, import Base.metadata here instead.
-target_metadata = MetaData()
+target_metadata = Base.metadata
 
-# Allow DATABASE_URL override via environment variable
-_db_url = os.environ.get("DATABASE_URL", "")
+_db_url = os.environ.get("DATABASE_URL", settings.DATABASE_URL)
 if _db_url:
     config.set_main_option("sqlalchemy.url", _db_url)
 
