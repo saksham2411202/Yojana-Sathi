@@ -1,5 +1,6 @@
 """Model validation and integrity tests."""
 import pytest
+
 from app.models.base import Question, SchemeRule
 from app.schemas.profile import PROFILE_FIELDS
 

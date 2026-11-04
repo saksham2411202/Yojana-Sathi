@@ -6,13 +6,13 @@ ROOT_DIR = Path(__file__).resolve().parent.parent.parent
 if str(ROOT_DIR) not in sys.path:
     sys.path.insert(0, str(ROOT_DIR))
 
-from alembic import command
-from alembic.config import Config
-from sqlalchemy import select
+from scripts.seed_dev import seed  # noqa: E402
+from sqlalchemy import select  # noqa: E402
 
-from app.db.session import SessionLocal
-from app.models.base import Need, Question, Scheme
-from scripts.seed_dev import seed
+from alembic import command  # noqa: E402
+from alembic.config import Config  # noqa: E402
+from app.db.session import SessionLocal  # noqa: E402
+from app.models.base import Need, Question, Scheme  # noqa: E402
 
 
 def test_migration_up_and_down() -> None:
