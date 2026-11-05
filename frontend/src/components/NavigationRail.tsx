@@ -41,7 +41,7 @@ export function NavigationRail({ lang, onLanguageToggle, t }: NavProps) {
     { href: "/", label: lang === "hi" ? "होम" : "Home", icon: Home },
     { href: "/schemes", label: lang === "hi" ? "योजनाएं" : "Schemes", icon: Layers },
     { href: "/match", label: lang === "hi" ? "पात्रता जांच" : "Check Eligibility", icon: CheckCircle2 },
-    { href: "/services", label: lang === "hi" ? "मार्गदर्शिका" : "Guides", icon: BookOpen },
+    { href: "/guides", label: lang === "hi" ? "मार्गदर्शिका" : "Guides", icon: BookOpen },
     { href: "/faqs", label: lang === "hi" ? "प्रश्नोत्तरी" : "FAQs", icon: HelpCircle },
     { href: "/about", label: lang === "hi" ? "परिचय" : "About", icon: Info },
   ];

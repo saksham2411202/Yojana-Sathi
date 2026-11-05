@@ -453,6 +453,28 @@ export default function HomePage() {
                 </Link>
               ))}
             </div>
+
+            {/* Relevant Guides Row */}
+            <div className="pt-2 flex flex-wrap items-center gap-2 text-xs text-ink-muted">
+              <span className="font-bold text-ink dark:text-white">
+                {lang === "hi" ? "संबंधित मार्गदर्शिका:" : "Related Service Guides:"}
+              </span>
+              <Link href="/guides/income-certificate" className="hover:text-amber-warm underline">
+                {lang === "hi" ? "आय प्रमाण पत्र" : "Income Certificate"}
+              </Link>
+              <span>•</span>
+              <Link href="/guides/caste-certificate" className="hover:text-amber-warm underline">
+                {lang === "hi" ? "जाति प्रमाण पत्र" : "Caste Certificate"}
+              </Link>
+              <span>•</span>
+              <Link href="/guides/domicile-certificate" className="hover:text-amber-warm underline">
+                {lang === "hi" ? "मूल निवास" : "Domicile"}
+              </Link>
+              <span>•</span>
+              <Link href="/guides/scholarships" className="hover:text-amber-warm underline">
+                {lang === "hi" ? "छात्रवृत्ति" : "Scholarships"}
+              </Link>
+            </div>
           </section>
         </main>
 

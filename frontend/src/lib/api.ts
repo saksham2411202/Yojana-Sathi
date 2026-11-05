@@ -249,3 +249,66 @@ export async function checkSchemeEligibility(
     }),
   });
 }
+
+
+export interface GuideListItemData {
+  id: number;
+  slug: string;
+  title: string;
+  summary: string;
+  official_url?: string | null;
+  last_verified?: string | null;
+  is_sample: boolean;
+}
+
+export interface GuideStepData {
+  step_number: number;
+  title: string;
+  description: string;
+}
+
+export interface GuideDocData {
+  name: string;
+  description?: string | null;
+  is_mandatory: boolean;
+}
+
+export interface GuideDetailData {
+  id: number;
+  slug: string;
+  title: string;
+  summary: string;
+  steps: GuideStepData[];
+  documents: GuideDocData[];
+  official_url?: string | null;
+  last_verified?: string | null;
+  is_sample: boolean;
+}
+
+export interface FAQItemData {
+  id: number;
+  question: string;
+  answer: string;
+  category: string;
+  is_sample: boolean;
+}
+
+export async function fetchGuides(lang = "en"): Promise<GuideListItemData[]> {
+  return request<GuideListItemData[]>(`/guides?lang=${encodeURIComponent(lang)}`);
+}
+
+export async function fetchGuideBySlug(slug: string, lang = "en"): Promise<GuideDetailData> {
+  return request<GuideDetailData>(`/guides/${encodeURIComponent(slug)}?lang=${encodeURIComponent(lang)}`);
+}
+
+export async function fetchFaqs(
+  lang = "en",
+  category?: string,
+  q?: string
+): Promise<FAQItemData[]> {
+  const query = new URLSearchParams();
+  query.set("lang", lang);
+  if (category) query.set("category", category);
+  if (q) query.set("q", q);
+  return request<FAQItemData[]>(`/faqs?${query.toString()}`);
+}

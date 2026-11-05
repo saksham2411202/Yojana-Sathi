@@ -86,6 +86,12 @@ export interface UIStrings {
   health: string;
   education: string;
   farming: string;
+  guidesTitle: string;
+  guidesSubtitle: string;
+  searchGuides: string;
+  documentsNeeded: string;
+  officialPortalLink: string;
+  noGuidesFound: string;
 }
 
 export const STRINGS: Record<Language, UIStrings> = {
@@ -175,6 +181,12 @@ export const STRINGS: Record<Language, UIStrings> = {
     health: "Healthcare",
     education: "Education",
     farming: "Agriculture",
+    guidesTitle: "Service Guides",
+    guidesSubtitle: "Official application steps, verified documents, and portal links",
+    searchGuides: "Search guides by service or certificate...",
+    documentsNeeded: "Documents Needed",
+    officialPortalLink: "Official Application Portal",
+    noGuidesFound: "No guides matched your query.",
   },
   hi: {
     appTitle: "योजना साथी",
@@ -262,5 +274,11 @@ export const STRINGS: Record<Language, UIStrings> = {
     health: "स्वास्थ्य",
     education: "शिक्षा",
     farming: "कृषि",
+    guidesTitle: "सेवा मार्गदर्शिका",
+    guidesSubtitle: "सरकारी आवेदन चरण, आवश्यक दस्तावेज़ व पोर्टल लिंक",
+    searchGuides: "सेवा अथवा प्रमाण पत्र खोजें...",
+    documentsNeeded: "आवश्यक दस्तावेज़",
+    officialPortalLink: "आधिकारिक आवेदन पोर्टल",
+    noGuidesFound: "कोई संबंधित मार्गदर्शिका नहीं मिली।",
   },
 };

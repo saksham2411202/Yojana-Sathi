@@ -1,6 +1,7 @@
 "use client";
 
 import React, { Suspense, useEffect, useState } from "react";
+import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import {
   ChevronDown,
@@ -572,6 +573,22 @@ function SchemesDirectoryContent() {
                           ))}
                         </div>
                       )}
+
+                      <div className="pt-2">
+                        <Link
+                          href="/guides"
+                          className="p-3 rounded-lg border border-teal-deep/20 bg-teal-50/50 dark:bg-teal-900/20 text-xs flex items-center justify-between group hover:border-amber-warm transition-all"
+                        >
+                          <span className="text-ink dark:text-slate-200">
+                            {lang === "hi"
+                              ? "दस्तावेज़ तैयार करने में सहायता चाहिए? आधिकारिक प्रक्रिया देखें।"
+                              : "Need instructions for preparing official paperwork? Review step-by-step guides."}
+                          </span>
+                          <span className="font-bold text-teal-deep dark:text-amber-warm underline shrink-0">
+                            {t.guidesTitle} →
+                          </span>
+                        </Link>
+                      </div>
                     </div>
                   )}
 
