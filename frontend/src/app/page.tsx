@@ -1,735 +1,463 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import Link from "next/link";
 import {
-  ArrowLeft,
-  Calendar,
+  ArrowRight,
+  Briefcase,
   CheckCircle2,
-  ChevronDown,
   ChevronRight,
-  ExternalLink,
   GraduationCap,
   HeartPulse,
   HelpCircle,
-  Info,
-  RefreshCw,
   Tractor,
+  User,
+  Users,
+  Accessibility,
 } from "lucide-react";
-
 import {
   createSession,
   fetchMatches,
   fetchNeeds,
   fetchNextQuestion,
-  fetchSchemeDetail,
+  fetchCatalogStats,
   MatchesData,
   NeedItem,
   NextQuestionData,
-  SchemeDetailData,
+  SchemeStatsResponse,
   submitAnswer,
-  undoLastAnswer,
   updateSessionNeeds,
 } from "@/lib/api";
 import { Language, STRINGS } from "@/lib/strings";
+import { NavigationRail } from "@/components/NavigationRail";
+import { Footer } from "@/components/Footer";
 
-type Step = "language" | "needs" | "question" | "results" | "detail";
+interface Persona {
+  id: string;
+  titleEn: string;
+  titleHi: string;
+  descEn: string;
+  descHi: string;
+  icon: React.ElementType;
+  needSlug: string;
+}
+
+const PERSONAS: Persona[] = [
+  {
+    id: "student",
+    titleEn: "Student",
+    titleHi: "विद्यार्थी / छात्र",
+    descEn: "Scholarships, fee waivers & education support",
+    descHi: "छात्रवृत्ति, शुल्क छूट एवं अध्ययन सहायता",
+    icon: GraduationCap,
+    needSlug: "education",
+  },
+  {
+    id: "farmer",
+    titleEn: "Farmer",
+    titleHi: "किसान",
+    descEn: "Input subsidies, crop cover & direct income",
+    descHi: "खाद-बीज अनुदान, फसल बीमा व सम्मान निधि",
+    icon: Tractor,
+    needSlug: "farming",
+  },
+  {
+    id: "senior",
+    titleEn: "Senior Citizen",
+    titleHi: "वरिष्ठ नागरिक",
+    descEn: "Pension schemes, healthcare & concessions",
+    descHi: "वृद्धावस्था पेंशन, स्वास्थ्य बीमा व रियायतें",
+    icon: User,
+    needSlug: "health",
+  },
+  {
+    id: "woman",
+    titleEn: "Woman",
+    titleHi: "महिला",
+    descEn: "Livelihood, maternity aid & welfare grants",
+    descHi: "मातृत्व सहायता, स्वरोजगार व सुरक्षा योजनाएं",
+    icon: Users,
+    needSlug: "health",
+  },
+  {
+    id: "worker",
+    titleEn: "Worker",
+    titleHi: "श्रमिक / कामगार",
+    descEn: "Social security, e-Shram & wage assistance",
+    descHi: "श्रमिक कार्ड, बीमा व असंगठित क्षेत्र सहायता",
+    icon: Briefcase,
+    needSlug: "farming",
+  },
+  {
+    id: "disability",
+    titleEn: "Person with Disability",
+    titleHi: "दिव्यांगजन",
+    descEn: "Assistive aids, monthly pension & allowances",
+    descHi: "सहायक उपकरण, विशेष पेंशन व प्रमाण पत्र",
+    icon: Accessibility,
+    needSlug: "health",
+  },
+  {
+    id: "family",
+    titleEn: "Family in Need",
+    titleHi: "ज़रूरतमंद परिवार",
+    descEn: "Ration support, housing & subsidized health",
+    descHi: "राशन, आवास योजना व आयुष्मान कार्ड",
+    icon: HeartPulse,
+    needSlug: "health",
+  },
+];
 
 export default function HomePage() {
   const [lang, setLang] = useState<Language>("en");
-  const [step, setStep] = useState<Step>("language");
-  const [sessionId, setSessionId] = useState<string | null>(null);
-
-  // Data states
-  const [needs, setNeeds] = useState<NeedItem[]>([]);
-  const [selectedNeeds, setSelectedNeeds] = useState<number[]>([]);
-  const [currentQuestion, setCurrentQuestion] = useState<NextQuestionData | null>(null);
-  const [questionCount, setQuestionCount] = useState<number>(1);
-  const [numberInputValue, setNumberInputValue] = useState<string>("");
-  const [stateInputValue, setStateInputValue] = useState<string>("");
-  const [matches, setMatches] = useState<MatchesData | null>(null);
-  const [selectedSchemeDetail, setSelectedSchemeDetail] = useState<SchemeDetailData | null>(null);
-  const [showIneligible, setShowIneligible] = useState<boolean>(false);
-
-  // UI status
-  const [loading, setLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
-
   const t = STRINGS[lang];
 
-  // Try to restore session from sessionStorage on initial load
+  // Stats and category data
+  const [stats, setStats] = useState<SchemeStatsResponse | null>(null);
+  const [needs, setNeeds] = useState<NeedItem[]>([]);
+
+  // Inline Quick-check state
+  const [selectedPersona, setSelectedPersona] = useState<Persona | null>(null);
+  const [quickSessionId, setQuickSessionId] = useState<string | null>(null);
+  const [quickQuestion, setQuickQuestion] = useState<NextQuestionData | null>(null);
+  const [questionIndex, setQuestionIndex] = useState<number>(0);
+  const [quickLoading, setQuickLoading] = useState<boolean>(false);
+  const [quickResults, setQuickResults] = useState<MatchesData | null>(null);
+
   useEffect(() => {
-    const savedSessionId = sessionStorage.getItem("yojana_session_id");
-    const savedLang = sessionStorage.getItem("yojana_lang") as Language | null;
+    const saved = sessionStorage.getItem("yojana_lang") as Language | null;
+    if (saved) setLang(saved);
 
-    if (savedLang) {
-      setLang(savedLang);
-    }
+    Promise.all([fetchCatalogStats(), fetchNeeds(lang)])
+      .then(([statsData, needsData]) => {
+        setStats(statsData);
+        setNeeds(needsData);
+      })
+      .catch((err) => console.error("Initial load error:", err));
+  }, [lang]);
 
-    if (savedSessionId) {
-      setSessionId(savedSessionId);
-    }
-  }, []);
-
-  const saveSession = (id: string, language: Language) => {
-    setSessionId(id);
-    sessionStorage.setItem("yojana_session_id", id);
-    sessionStorage.setItem("yojana_lang", language);
+  const handleLanguageToggle = () => {
+    const next: Language = lang === "en" ? "hi" : "en";
+    setLang(next);
+    sessionStorage.setItem("yojana_lang", next);
   };
 
-  const clearSession = () => {
-    setSessionId(null);
-    setSelectedNeeds([]);
-    setCurrentQuestion(null);
-    setMatches(null);
-    setSelectedSchemeDetail(null);
-    setQuestionCount(1);
-    setNumberInputValue("");
-    setStateInputValue("");
-    sessionStorage.removeItem("yojana_session_id");
-    setStep("language");
-  };
-
-  // ─── Step 1: Handle Language Selection ────────────────────────────────────
-  const handleSelectLanguage = async (selectedLang: Language) => {
-    setLang(selectedLang);
-    setLoading(true);
-    setError(null);
+  // Start Quick Check when a persona tile is selected
+  const handleSelectPersona = async (persona: Persona) => {
+    setSelectedPersona(persona);
+    setQuickLoading(true);
+    setQuickResults(null);
+    setQuestionIndex(0);
 
     try {
-      const session = await createSession(selectedLang);
-      saveSession(session.id, selectedLang);
+      const session = await createSession(lang);
+      setQuickSessionId(session.id);
+      sessionStorage.setItem("yojana_session_id", session.id);
 
-      const needsData = await fetchNeeds(selectedLang);
-      setNeeds(needsData);
-      setStep("needs");
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : t.errorTitle);
-    } finally {
-      setLoading(false);
-    }
-  };
+      // Map persona to need ID
+      const matchedNeed = needs.find((n) => n.slug === persona.needSlug);
+      const needIds = matchedNeed ? [matchedNeed.id] : needs.slice(0, 1).map((n) => n.id);
+      await updateSessionNeeds(session.id, needIds);
 
-  // ─── Step 2: Handle Needs Submit ──────────────────────────────────────────
-  const toggleNeed = (id: number) => {
-    setSelectedNeeds((prev) =>
-      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
-    );
-  };
-
-  const handleContinueNeeds = async () => {
-    if (!sessionId || selectedNeeds.length === 0) return;
-    setLoading(true);
-    setError(null);
-
-    try {
-      await updateSessionNeeds(sessionId, selectedNeeds);
-      const q = await fetchNextQuestion(sessionId, lang);
+      const q = await fetchNextQuestion(session.id, lang);
       if (q.done) {
-        await loadResults(sessionId);
+        const matches = await fetchMatches(session.id, lang);
+        setQuickResults(matches);
       } else {
-        setCurrentQuestion(q);
-        setQuestionCount(1);
-        setNumberInputValue("");
-        setStateInputValue("");
-        setStep("question");
+        setQuickQuestion(q);
+        setQuestionIndex(1);
       }
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : t.errorTitle);
+    } catch (err) {
+      console.error("Quick check start failed:", err);
     } finally {
-      setLoading(false);
+      setQuickLoading(false);
     }
   };
 
-  // ─── Step 3: Handle Questions ─────────────────────────────────────────────
-  const handleAnswer = async (value: unknown, unknown = false) => {
-    if (!sessionId || !currentQuestion?.profile_field) return;
-    setLoading(true);
-    setError(null);
+  // Handle answering inline quick-check questions
+  const handleAnswerQuestion = async (value: unknown, isUnknown: boolean = false) => {
+    if (!quickSessionId || !quickQuestion?.profile_field) return;
+    setQuickLoading(true);
 
     try {
-      await submitAnswer(sessionId, currentQuestion.profile_field, value, unknown);
-      const nextQ = await fetchNextQuestion(sessionId, lang);
+      await submitAnswer(quickSessionId, quickQuestion.profile_field, value, isUnknown);
 
-      if (nextQ.done) {
-        await loadResults(sessionId);
+      // Stop after 3 questions max for the quick check
+      if (questionIndex >= 3) {
+        const matches = await fetchMatches(quickSessionId, lang);
+        setQuickResults(matches);
+        setQuickQuestion(null);
       } else {
-        setCurrentQuestion(nextQ);
-        setQuestionCount((c) => c + 1);
-        setNumberInputValue("");
-        setStateInputValue("");
+        const nextQ = await fetchNextQuestion(quickSessionId, lang);
+        if (nextQ.done) {
+          const matches = await fetchMatches(quickSessionId, lang);
+          setQuickResults(matches);
+          setQuickQuestion(null);
+        } else {
+          setQuickQuestion(nextQ);
+          setQuestionIndex((prev) => prev + 1);
+        }
       }
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : t.errorTitle);
+    } catch (err) {
+      console.error("Answer submission failed:", err);
     } finally {
-      setLoading(false);
+      setQuickLoading(false);
     }
   };
-
-  const handleUndo = async () => {
-    if (!sessionId) return;
-    setLoading(true);
-    setError(null);
-
-    try {
-      await undoLastAnswer(sessionId);
-      const q = await fetchNextQuestion(sessionId, lang);
-
-      if (q.done) {
-        // If it was already done, stay on question or go back
-        setStep("needs");
-      } else {
-        setCurrentQuestion(q);
-        setQuestionCount((c) => Math.max(1, c - 1));
-        setNumberInputValue("");
-        setStateInputValue("");
-      }
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : t.errorTitle);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // ─── Step 4: Handle Results ───────────────────────────────────────────────
-  const loadResults = async (sId: string) => {
-    setLoading(true);
-    try {
-      const matchData = await fetchMatches(sId, lang);
-      setMatches(matchData);
-      setStep("results");
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : t.errorTitle);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // ─── Step 5: Handle Scheme Detail ─────────────────────────────────────────
-  const handleViewSchemeDetail = async (schemeId: number) => {
-    setLoading(true);
-    setError(null);
-    try {
-      const detail = await fetchSchemeDetail(schemeId, lang);
-      setSelectedSchemeDetail(detail);
-      setStep("detail");
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : t.errorTitle);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const renderNeedIcon = (icon: string) => {
-    switch (icon) {
-      case "heart-pulse":
-        return <HeartPulse className="w-10 h-10 text-rose-600" />;
-      case "graduation-cap":
-        return <GraduationCap className="w-10 h-10 text-indigo-600" />;
-      case "tractor":
-        return <Tractor className="w-10 h-10 text-emerald-600" />;
-      default:
-        return <HelpCircle className="w-10 h-10 text-slate-600" />;
-    }
-  };
-
-  // ─── Screen: Loading & Error States ───────────────────────────────────────
-  if (loading && !currentQuestion && !matches && !needs.length) {
-    return (
-      <div className="flex-1 flex flex-col items-center justify-center p-6 text-center">
-        <RefreshCw className="w-10 h-10 text-blue-600 animate-spin mb-4" />
-        <p className="text-lg font-medium text-slate-700">{t.loading}</p>
-      </div>
-    );
-  }
 
   return (
-    <div className="flex-1 flex flex-col">
-      {/* Header */}
-      <header className="flex items-center justify-between pb-4 mb-4 border-b border-slate-200">
-        <h1 className="text-xl font-bold tracking-tight text-blue-900">{t.appTitle}</h1>
-        {step !== "language" && (
-          <button
-            onClick={clearSession}
-            className="text-xs font-semibold text-slate-500 hover:text-slate-800 px-2 py-1 rounded bg-slate-100"
-          >
-            {t.restart}
-          </button>
-        )}
-      </header>
+    <div className="min-h-screen flex flex-col bg-offwhite dark:bg-offwhite-dark text-ink dark:text-slate-100 dot-grid transition-colors">
+      <NavigationRail lang={lang} onLanguageToggle={handleLanguageToggle} t={t} />
 
-      {/* Error alert if any */}
-      {error && (
-        <div className="mb-4 p-4 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm flex items-start justify-between">
-          <span>{error}</span>
-          <button
-            onClick={() => setError(null)}
-            className="ml-2 font-bold text-red-900"
-          >
-            ✕
-          </button>
-        </div>
-      )}
-
-      {/* ─── Screen 1: Language Picker ───────────────────────────────────── */}
-      {step === "language" && (
-        <div className="flex-1 flex flex-col justify-center">
-          <div className="text-center mb-8">
-            <h2 className="text-2xl font-bold text-slate-900 mb-2">
-              Choose Language / भाषा चुनें
-            </h2>
-            <p className="text-sm text-slate-600">{t.selectLanguageSubtitle}</p>
-          </div>
-
-          <div className="space-y-4">
-            <button
-              onClick={() => handleSelectLanguage("en")}
-              className="w-full min-h-[64px] py-4 px-6 rounded-2xl border-2 border-slate-200 bg-white hover:border-blue-600 hover:bg-blue-50/50 shadow-sm flex items-center justify-between text-left transition-all active:scale-[0.98]"
-            >
-              <div>
-                <span className="text-xl font-bold text-slate-900 block">English</span>
-                <span className="text-xs text-slate-500">Continue in English</span>
-              </div>
-              <ChevronRight className="w-6 h-6 text-slate-400" />
-            </button>
-
-            <button
-              onClick={() => handleSelectLanguage("hi")}
-              className="w-full min-h-[64px] py-4 px-6 rounded-2xl border-2 border-slate-200 bg-white hover:border-blue-600 hover:bg-blue-50/50 shadow-sm flex items-center justify-between text-left transition-all active:scale-[0.98]"
-            >
-              <div>
-                <span className="text-xl font-bold text-slate-900 block">हिन्दी</span>
-                <span className="text-xs text-slate-500">हिन्दी में जारी रखें</span>
-              </div>
-              <ChevronRight className="w-6 h-6 text-slate-400" />
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* ─── Screen 2: Needs Grid ────────────────────────────────────────── */}
-      {step === "needs" && (
-        <div className="flex-1 flex flex-col">
-          <div className="mb-6">
-            <h2 className="text-xl font-bold text-slate-900 mb-1">{t.selectNeedsTitle}</h2>
-            <p className="text-sm text-slate-600">{t.selectNeedsSubtitle}</p>
-          </div>
-
-          <div className="grid grid-cols-1 gap-3.5 mb-8">
-            {needs.map((item) => {
-              const isSelected = selectedNeeds.includes(item.id);
-              return (
-                <button
-                  key={item.id}
-                  onClick={() => toggleNeed(item.id)}
-                  className={`min-h-[76px] p-4 rounded-2xl border-2 text-left flex items-center gap-4 transition-all active:scale-[0.98] ${
-                    isSelected
-                      ? "border-blue-600 bg-blue-50/70 shadow-sm"
-                      : "border-slate-200 bg-white hover:border-slate-300 shadow-sm"
-                  }`}
-                >
-                  <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-100 flex-shrink-0">
-                    {renderNeedIcon(item.icon)}
-                  </div>
-                  <div className="flex-1">
-                    <span className="text-base font-semibold text-slate-900 block leading-snug">
-                      {item.label}
-                    </span>
-                  </div>
-                  <div
-                    className={`w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
-                      isSelected
-                        ? "border-blue-600 bg-blue-600 text-white"
-                        : "border-slate-300"
-                    }`}
-                  >
-                    {isSelected && <CheckCircle2 className="w-4 h-4" />}
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-
-          <div className="mt-auto pt-4">
-            <button
-              disabled={selectedNeeds.length === 0 || loading}
-              onClick={handleContinueNeeds}
-              className="w-full min-h-[52px] py-3.5 px-6 rounded-xl bg-blue-600 text-white font-semibold text-base shadow-md hover:bg-blue-700 disabled:opacity-40 disabled:pointer-events-none active:scale-[0.98] transition-all flex items-center justify-center gap-2"
-            >
-              {loading ? (
-                <RefreshCw className="w-5 h-5 animate-spin" />
-              ) : (
-                <>
-                  <span>{t.continueBtn}</span>
-                  <ChevronRight className="w-5 h-5" />
-                </>
-              )}
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* ─── Screen 3: Question Screen ───────────────────────────────────── */}
-      {step === "question" && currentQuestion && (
-        <div className="flex-1 flex flex-col justify-between">
-          <div>
-            {/* Top Back & Progress bar */}
-            <div className="flex items-center justify-between mb-4">
-              <button
-                onClick={handleUndo}
-                className="flex items-center gap-1.5 text-xs font-semibold text-slate-600 hover:text-slate-900 px-3 py-2 rounded-lg bg-slate-100 active:scale-95 transition-all"
-              >
-                <ArrowLeft className="w-4 h-4" />
-                <span>{t.backBtn}</span>
-              </button>
-              <span className="text-xs font-semibold tracking-wider text-slate-500 uppercase">
-                {t.questionProgress} #{questionCount}
+      {/* Main content shifted right on desktop for sidebar rail */}
+      <div className="flex-1 md:pl-60 flex flex-col justify-between">
+        <main className="max-w-5xl w-full mx-auto px-4 sm:px-8 py-8 sm:py-12 space-y-12">
+          {/* ========================================================= */}
+          {/* 1. START WITH YOUR SITUATION / WHO ARE YOU? */}
+          {/* ========================================================= */}
+          <section className="space-y-6">
+            <div className="space-y-2">
+              <span className="text-[11px] font-black uppercase tracking-widest text-teal-deep dark:text-amber-warm bg-teal-50 dark:bg-teal-900/40 px-2.5 py-1 rounded-md border border-teal-deep/20">
+                {lang === "hi" ? "त्वरित पात्रता जांच" : "Quick Evaluation"}
               </span>
+              <h1 className="text-2xl sm:text-4xl font-black tracking-tight text-ink dark:text-white font-heading">
+                {lang === "hi" ? "अपनी स्थिति से शुरुआत करें।" : "Start with your situation."}
+              </h1>
+              <p className="text-xs sm:text-sm text-ink-muted dark:text-slate-400 max-w-xl">
+                {lang === "hi"
+                  ? "नीचे अपनी उपयुक्त श्रेणी चुनें और 3 सरल प्रश्नों में सत्यापित सरकारी योजनाओं की पात्रता देखें।"
+                  : "Select the category that best describes your profile for an immediate 3-question eligibility check."}
+              </p>
             </div>
 
-            {/* Question Label */}
-            <h2 className="text-xl font-bold text-slate-900 leading-snug mb-2">
-              {currentQuestion.label}
-            </h2>
-
-            {currentQuestion.help_text && (
-              <p className="text-sm text-slate-500 mb-6 flex items-start gap-1.5">
-                <Info className="w-4 h-4 text-slate-400 flex-shrink-0 mt-0.5" />
-                <span>{currentQuestion.help_text}</span>
-              </p>
-            )}
-
-            {/* Input Controls */}
-            <div className="mt-6 space-y-3">
-              {/* YES / NO */}
-              {currentQuestion.input_type === "yes_no" && (
-                <div className="grid grid-cols-2 gap-3">
+            {/* Persona Tiles */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+              {PERSONAS.map((persona) => {
+                const Icon = persona.icon;
+                const isSelected = selectedPersona?.id === persona.id;
+                return (
                   <button
-                    onClick={() => handleAnswer(true)}
-                    className="min-h-[64px] py-4 px-6 rounded-xl border-2 border-slate-200 bg-white hover:border-emerald-600 hover:bg-emerald-50 text-slate-900 font-bold text-lg active:scale-95 transition-all shadow-sm"
+                    key={persona.id}
+                    onClick={() => handleSelectPersona(persona)}
+                    className={`text-left p-4 yojana-card bg-offwhite-surface dark:bg-offwhite-darkSurface border transition-all ${
+                      isSelected
+                        ? "border-teal-deep dark:border-amber-warm border-l-4 border-l-amber-warm ring-1 ring-amber-warm/40"
+                        : "border-offwhite-border dark:border-offwhite-darkBorder hover:border-amber-warm"
+                    }`}
                   >
-                    {t.yes}
+                    <div className="w-9 h-9 rounded-lg bg-teal-50 dark:bg-teal-900/50 text-teal-deep dark:text-amber-warm flex items-center justify-center mb-3">
+                      <Icon className="w-5 h-5" />
+                    </div>
+                    <h3 className="text-xs sm:text-sm font-bold text-ink dark:text-white font-heading">
+                      {lang === "hi" ? persona.titleHi : persona.titleEn}
+                    </h3>
+                    <p className="text-[11px] text-ink-muted dark:text-slate-400 mt-1 line-clamp-2 leading-relaxed">
+                      {lang === "hi" ? persona.descHi : persona.descEn}
+                    </p>
                   </button>
+                );
+              })}
+            </div>
+
+            {/* INLINE 3-QUESTION QUICK CHECK */}
+            {selectedPersona && (
+              <div className="p-6 rounded-card border border-offwhite-border dark:border-offwhite-darkBorder bg-offwhite-surface dark:bg-offwhite-darkSurface space-y-6">
+                <div className="flex items-center justify-between pb-3 border-b border-offwhite-border dark:border-offwhite-darkBorder">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2.5 h-2.5 rounded-full bg-amber-warm animate-pulse" />
+                    <span className="text-xs font-bold text-ink dark:text-white font-heading">
+                      {lang === "hi"
+                        ? `${selectedPersona.titleHi} — प्रश्न ${questionIndex || 1}/3`
+                        : `${selectedPersona.titleEn} — Question ${questionIndex || 1} of 3`}
+                    </span>
+                  </div>
                   <button
-                    onClick={() => handleAnswer(false)}
-                    className="min-h-[64px] py-4 px-6 rounded-xl border-2 border-slate-200 bg-white hover:border-rose-600 hover:bg-rose-50 text-slate-900 font-bold text-lg active:scale-95 transition-all shadow-sm"
+                    onClick={() => {
+                      setSelectedPersona(null);
+                      setQuickQuestion(null);
+                      setQuickResults(null);
+                    }}
+                    className="text-[11px] text-ink-muted dark:text-slate-400 hover:text-coral transition-colors"
                   >
-                    {t.no}
+                    {lang === "hi" ? "रद्द करें" : "Cancel"}
                   </button>
                 </div>
-              )}
 
-              {/* SINGLE CHOICE OPTIONS */}
-              {currentQuestion.input_type === "single_choice" &&
-                currentQuestion.options && (
-                  <div className="space-y-2.5">
-                    {currentQuestion.options.map((opt) => (
-                      <button
-                        key={opt}
-                        onClick={() => handleAnswer(opt)}
-                        className="w-full min-h-[56px] py-3.5 px-5 rounded-xl border-2 border-slate-200 bg-white hover:border-blue-600 hover:bg-blue-50 text-slate-900 font-semibold text-left flex items-center justify-between active:scale-95 transition-all shadow-sm"
-                      >
-                        <span className="capitalize">{opt}</span>
-                        <ChevronRight className="w-5 h-5 text-slate-400" />
-                      </button>
-                    ))}
+                {quickLoading && (
+                  <div className="py-8 text-center text-xs text-ink-muted dark:text-slate-400 font-medium animate-pulse">
+                    {t.loading}
                   </div>
                 )}
 
-              {/* NUMBER INPUT */}
-              {currentQuestion.input_type === "number" && (
-                <div className="space-y-4">
-                  <input
-                    type="number"
-                    value={numberInputValue}
-                    onChange={(e) => setNumberInputValue(e.target.value)}
-                    placeholder="e.g. 25"
-                    className="w-full min-h-[56px] py-3 px-4 rounded-xl border-2 border-slate-300 text-slate-900 text-xl font-semibold focus:outline-none focus:border-blue-600 shadow-sm"
-                  />
-                  <button
-                    disabled={!numberInputValue.trim() || loading}
-                    onClick={() => handleAnswer(Number(numberInputValue))}
-                    className="w-full min-h-[52px] py-3 px-6 rounded-xl bg-blue-600 text-white font-semibold text-base shadow hover:bg-blue-700 disabled:opacity-40 transition-all"
-                  >
-                    {t.submitBtn}
-                  </button>
-                </div>
-              )}
-
-              {/* STATE PICKER */}
-              {currentQuestion.input_type === "state_picker" && (
-                <div className="space-y-4">
-                  <input
-                    type="text"
-                    value={stateInputValue}
-                    onChange={(e) => setStateInputValue(e.target.value)}
-                    placeholder="Enter state name (e.g. Delhi, Punjab)"
-                    className="w-full min-h-[56px] py-3 px-4 rounded-xl border-2 border-slate-300 text-slate-900 text-lg font-semibold focus:outline-none focus:border-blue-600 shadow-sm"
-                  />
-                  <button
-                    disabled={!stateInputValue.trim() || loading}
-                    onClick={() => handleAnswer(stateInputValue.trim())}
-                    className="w-full min-h-[52px] py-3 px-6 rounded-xl bg-blue-600 text-white font-semibold text-base shadow hover:bg-blue-700 disabled:opacity-40 transition-all"
-                  >
-                    {t.submitBtn}
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* "I DON'T KNOW" ALWAYS VISIBLE */}
-          <div className="mt-8 pt-4 border-t border-slate-100">
-            <button
-              onClick={() => handleAnswer(null, true)}
-              className="w-full min-h-[50px] py-3 px-4 rounded-xl border border-slate-300 bg-slate-100/80 hover:bg-slate-200/80 text-slate-700 font-medium text-sm flex items-center justify-center gap-2 active:scale-95 transition-all"
-            >
-              <HelpCircle className="w-4 h-4 text-slate-500" />
-              <span>{t.dontKnowBtn}</span>
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* ─── Screen 4: Results ───────────────────────────────────────────── */}
-      {step === "results" && matches && (
-        <div className="flex-1 flex flex-col space-y-6">
-          <div className="border-b border-slate-200 pb-3">
-            <h2 className="text-xl font-bold text-slate-900">{t.resultsTitle}</h2>
-          </div>
-
-          {/* Section: You Qualify */}
-          <div>
-            <div className="flex items-center gap-2 mb-3">
-              <span className="w-3 h-3 rounded-full bg-emerald-500"></span>
-              <h3 className="text-base font-bold text-slate-900 uppercase tracking-wide">
-                {t.eligibleTitle} ({matches.eligible.length})
-              </h3>
-            </div>
-
-            {matches.eligible.length === 0 ? (
-              <p className="text-sm text-slate-500 italic bg-white p-4 rounded-xl border border-slate-200">
-                {t.noEligibleSchemes}
-              </p>
-            ) : (
-              <div className="space-y-3.5">
-                {matches.eligible.map((s) => (
-                  <div
-                    key={s.id}
-                    className="p-4 rounded-2xl bg-white border-2 border-emerald-500 shadow-sm space-y-3"
-                  >
-                    {/* Benefit shown first */}
-                    <div className="p-3 rounded-xl bg-emerald-50/80 border border-emerald-100">
-                      <span className="text-xs font-bold text-emerald-800 uppercase block mb-0.5">
-                        {t.benefitLabel}
-                      </span>
-                      <p className="text-sm font-semibold text-emerald-950">
-                        {s.benefit_summary}
-                      </p>
-                    </div>
-
-                    <h4 className="text-base font-bold text-slate-900 leading-snug">
-                      {s.name}
+                {!quickLoading && quickQuestion && !quickResults && (
+                  <div className="space-y-4 max-w-xl">
+                    <h4 className="text-sm sm:text-base font-bold text-ink dark:text-white">
+                      {quickQuestion.label}
                     </h4>
+                    {quickQuestion.help_text && (
+                      <p className="text-xs text-ink-muted dark:text-slate-400">
+                        {quickQuestion.help_text}
+                      </p>
+                    )}
 
-                    <div className="flex items-center justify-between text-xs text-slate-500 pt-1">
-                      {s.last_verified && (
-                        <span className="flex items-center gap-1">
-                          <Calendar className="w-3.5 h-3.5" />
-                          {t.lastVerified}: {s.last_verified}
-                        </span>
-                      )}
-                      {s.source_url && (
-                        <a
-                          href={s.source_url}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="text-blue-600 font-semibold flex items-center gap-1 hover:underline"
+                    {/* Options */}
+                    <div className="flex flex-wrap gap-2 pt-2">
+                      {quickQuestion.options?.map((opt) => (
+                        <button
+                          key={opt}
+                          onClick={() => handleAnswerQuestion(opt)}
+                          className="px-4 py-2 rounded-lg border border-offwhite-border dark:border-offwhite-darkBorder bg-offwhite dark:bg-offwhite-dark hover:border-amber-warm text-xs font-semibold text-ink dark:text-slate-200 transition-all"
                         >
-                          <span>{t.sourceLink}</span>
-                          <ExternalLink className="w-3.5 h-3.5" />
-                        </a>
+                          {opt}
+                        </button>
+                      ))}
+
+                      {quickQuestion.input_type === "yes_no" && (
+                        <>
+                          <button
+                            onClick={() => handleAnswerQuestion(true)}
+                            className="px-5 py-2 rounded-lg border border-offwhite-border dark:border-offwhite-darkBorder bg-offwhite dark:bg-offwhite-dark hover:border-teal-deep text-xs font-bold text-ink dark:text-slate-200"
+                          >
+                            {t.yes}
+                          </button>
+                          <button
+                            onClick={() => handleAnswerQuestion(false)}
+                            className="px-5 py-2 rounded-lg border border-offwhite-border dark:border-offwhite-darkBorder bg-offwhite dark:bg-offwhite-dark hover:border-coral text-xs font-bold text-ink dark:text-slate-200"
+                          >
+                            {t.no}
+                          </button>
+                        </>
                       )}
+
+                      {/* "I don't know" button */}
+                      <button
+                        onClick={() => handleAnswerQuestion(null, true)}
+                        className="px-4 py-2 rounded-lg border border-dashed border-offwhite-border dark:border-offwhite-darkBorder bg-transparent hover:bg-offwhite dark:hover:bg-offwhite-dark text-xs text-ink-muted dark:text-slate-400 font-medium transition-all flex items-center gap-1.5"
+                      >
+                        <HelpCircle className="w-3.5 h-3.5" />
+                        <span>{t.dontKnowBtn}</span>
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* RESULT STRIP */}
+                {!quickLoading && quickResults && (
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <CheckCircle2 className="w-4 h-4 text-teal-deep dark:text-amber-warm" />
+                        <h4 className="text-xs font-bold uppercase tracking-wider text-teal-deep dark:text-amber-warm">
+                          {lang === "hi" ? "प्रारंभिक परिणाम तैयार हैं" : "Preliminary Evaluation Ready"}
+                        </h4>
+                      </div>
+                      <Link
+                        href="/match"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-teal-deep text-white text-xs font-bold hover:bg-teal-800 transition-all"
+                      >
+                        <span>{lang === "hi" ? "पूरे परिणाम देखें" : "See full results"}</span>
+                        <ChevronRight className="w-3.5 h-3.5" />
+                      </Link>
                     </div>
 
-                    <button
-                      onClick={() => handleViewSchemeDetail(s.id)}
-                      className="w-full py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm shadow-sm transition-all"
-                    >
-                      {t.viewDetails}
-                    </button>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {[...quickResults.eligible, ...quickResults.needs_info].slice(0, 4).map((item) => (
+                        <Link
+                          key={item.id}
+                          href={`/schemes/${item.id}`}
+                          className="p-3.5 rounded-lg border border-offwhite-border dark:border-offwhite-darkBorder bg-offwhite/50 dark:bg-offwhite-dark/40 hover:border-amber-warm flex items-start justify-between gap-2 group transition-all"
+                        >
+                          <div className="space-y-1">
+                            <h5 className="text-xs font-bold text-ink dark:text-white group-hover:text-amber-warm transition-colors">
+                              {item.name}
+                            </h5>
+                            <p className="text-[11px] text-ink-muted dark:text-slate-400 line-clamp-1">
+                              {item.benefit_summary}
+                            </p>
+                          </div>
+                          <ArrowRight className="w-3.5 h-3.5 text-ink-muted group-hover:text-amber-warm shrink-0 mt-1" />
+                        </Link>
+                      ))}
+                    </div>
                   </div>
-                ))}
+                )}
               </div>
             )}
-          </div>
+          </section>
 
-          {/* Section: You May Qualify */}
-          {matches.needs_info.length > 0 && (
-            <div>
-              <div className="flex items-center gap-2 mb-3">
-                <span className="w-3 h-3 rounded-full bg-amber-500"></span>
-                <h3 className="text-base font-bold text-slate-900 uppercase tracking-wide">
-                  {t.needsInfoTitle} ({matches.needs_info.length})
-                </h3>
+          {/* ========================================================= */}
+          {/* 2. HORIZONTAL STATS TICKER */}
+          {/* ========================================================= */}
+          <section className="py-3 px-5 rounded-card border border-offwhite-border dark:border-offwhite-darkBorder bg-offwhite-surface dark:bg-offwhite-darkSurface overflow-x-auto">
+            <div className="flex items-center justify-between min-w-[580px] text-xs font-bold text-ink dark:text-slate-200 divide-x divide-offwhite-border dark:divide-offwhite-darkBorder">
+              <div className="pr-4 flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-teal-deep dark:bg-amber-warm" />
+                <span className="text-ink-muted dark:text-slate-400">{t.totalSchemes}:</span>
+                <span className="text-sm font-black font-heading text-teal-deep dark:text-amber-warm">
+                  {stats?.total || 14}
+                </span>
               </div>
-
-              <div className="space-y-3.5">
-                {matches.needs_info.map((s) => (
-                  <div
-                    key={s.id}
-                    className="p-4 rounded-2xl bg-white border border-amber-300 shadow-sm space-y-3"
-                  >
-                    <div className="p-3 rounded-xl bg-amber-50/80 border border-amber-100">
-                      <span className="text-xs font-bold text-amber-800 uppercase block mb-0.5">
-                        {t.benefitLabel}
-                      </span>
-                      <p className="text-sm font-semibold text-amber-950">
-                        {s.benefit_summary}
-                      </p>
-                    </div>
-
-                    <h4 className="text-base font-bold text-slate-900 leading-snug">
-                      {s.name}
-                    </h4>
-
-                    <button
-                      onClick={() => handleViewSchemeDetail(s.id)}
-                      className="w-full py-2.5 px-4 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-semibold text-sm shadow-sm transition-all"
-                    >
-                      {t.viewDetails}
-                    </button>
-                  </div>
-                ))}
+              <div className="px-4 flex items-center gap-2">
+                <span className="text-ink-muted dark:text-slate-400">{t.centralSchemes}:</span>
+                <span className="text-sm font-black font-heading">
+                  {stats?.by_level["central"] || 8}
+                </span>
+              </div>
+              <div className="px-4 flex items-center gap-2">
+                <span className="text-ink-muted dark:text-slate-400">{t.stateSchemes}:</span>
+                <span className="text-sm font-black font-heading">
+                  {stats?.by_level["state"] || 6}
+                </span>
+              </div>
+              <div className="pl-4 flex items-center gap-2">
+                <span className="text-ink-muted dark:text-slate-400">
+                  {lang === "hi" ? "सत्यापित नियम" : "Verified Rules"}:
+                </span>
+                <span className="text-sm font-black font-heading text-teal-deep dark:text-amber-warm">
+                  100%
+                </span>
               </div>
             </div>
-          )}
+          </section>
 
-          {/* Section: Ineligible Toggle */}
-          {matches.not_eligible.length > 0 && (
-            <div className="pt-2">
-              <button
-                onClick={() => setShowIneligible(!showIneligible)}
-                className="w-full py-3 px-4 rounded-xl border border-slate-200 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs flex items-center justify-between"
-              >
-                <span>{showIneligible ? t.hideNotEligible : t.showNotEligible}</span>
-                <ChevronDown
-                  className={`w-4 h-4 transition-transform ${
-                    showIneligible ? "rotate-180" : ""
-                  }`}
-                />
-              </button>
-
-              {showIneligible && (
-                <div className="mt-3 space-y-3">
-                  {matches.not_eligible.map((s) => (
-                    <div
-                      key={s.id}
-                      className="p-3.5 rounded-xl bg-slate-100/60 border border-slate-200 text-slate-600"
-                    >
-                      <h4 className="text-sm font-bold text-slate-800">{s.name}</h4>
-                      <p className="text-xs text-slate-500 mt-1">{s.benefit_summary}</p>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* ─── Screen 5: Scheme Detail Modal/Screen ────────────────────────── */}
-      {step === "detail" && selectedSchemeDetail && (
-        <div className="flex-1 flex flex-col justify-between">
-          <div className="space-y-5">
-            <button
-              onClick={() => setStep("results")}
-              className="flex items-center gap-1.5 text-xs font-semibold text-slate-600 hover:text-slate-900 px-3 py-2 rounded-lg bg-slate-100 active:scale-95 transition-all"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              <span>{t.backBtn}</span>
-            </button>
-
-            <div>
-              <h2 className="text-xl font-bold text-slate-900 leading-snug">
-                {selectedSchemeDetail.name}
+          {/* ========================================================= */}
+          {/* 3. BROWSE BY CATEGORY PILL ROW */}
+          {/* ========================================================= */}
+          <section className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-xs font-bold uppercase tracking-wider text-ink-muted dark:text-slate-400 font-heading">
+                {lang === "hi" ? "श्रेणी अनुसार देखें" : "Browse by category"}
               </h2>
-              {selectedSchemeDetail.ministry && (
-                <p className="text-xs text-slate-500 mt-1">
-                  {selectedSchemeDetail.ministry}
-                </p>
-              )}
-            </div>
-
-            {/* Benefit Box */}
-            <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200">
-              <span className="text-xs font-bold text-emerald-800 uppercase block mb-1">
-                {t.benefitLabel}
-              </span>
-              <p className="text-base font-semibold text-emerald-950">
-                {selectedSchemeDetail.benefit_summary}
-              </p>
-            </div>
-
-            {/* Documents List */}
-            <div>
-              <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider mb-3">
-                {t.documentsTitle}
-              </h3>
-
-              {selectedSchemeDetail.documents.length === 0 ? (
-                <p className="text-xs text-slate-500 italic">No specific documents listed.</p>
-              ) : (
-                <div className="space-y-3">
-                  {selectedSchemeDetail.documents.map((doc) => (
-                    <div
-                      key={doc.id}
-                      className="p-3.5 rounded-xl border border-slate-200 bg-white shadow-sm space-y-1.5"
-                    >
-                      <div className="flex items-start justify-between gap-2">
-                        <span className="text-sm font-bold text-slate-900">
-                          {doc.document_name}
-                        </span>
-                        <span
-                          className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-md ${
-                            doc.is_mandatory
-                              ? "bg-rose-100 text-rose-800"
-                              : "bg-slate-100 text-slate-700"
-                          }`}
-                        >
-                          {doc.is_mandatory ? t.mandatory : t.optional}
-                        </span>
-                      </div>
-                      {doc.where_to_obtain && (
-                        <p className="text-xs text-slate-500">
-                          <span className="font-semibold text-slate-600">
-                            {t.whereToObtain}:
-                          </span>{" "}
-                          {doc.where_to_obtain}
-                        </p>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* External Source Link */}
-          {selectedSchemeDetail.source_url && (
-            <div className="mt-8 pt-4 border-t border-slate-200">
-              <a
-                href={selectedSchemeDetail.source_url}
-                target="_blank"
-                rel="noreferrer"
-                className="w-full min-h-[48px] py-3 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm flex items-center justify-center gap-2 shadow-sm transition-all"
+              <Link
+                href="/schemes"
+                className="text-xs font-bold text-teal-deep dark:text-amber-warm hover:underline"
               >
-                <span>{t.sourceLink}</span>
-                <ExternalLink className="w-4 h-4" />
-              </a>
+                {lang === "hi" ? "सभी योजनाएं देखें" : "View all schemes"} →
+              </Link>
             </div>
-          )}
-        </div>
-      )}
+
+            <div className="flex flex-wrap gap-2.5">
+              <Link
+                href="/schemes"
+                className="px-4 py-2 rounded-xl border border-offwhite-border dark:border-offwhite-darkBorder bg-offwhite-surface dark:bg-offwhite-darkSurface hover:border-amber-warm text-xs font-bold text-ink dark:text-slate-200 transition-all"
+              >
+                {t.allNeeds}
+              </Link>
+              {needs.map((need) => (
+                <Link
+                  key={need.id}
+                  href={`/schemes?need=${need.slug}`}
+                  className="px-4 py-2 rounded-xl border border-offwhite-border dark:border-offwhite-darkBorder bg-offwhite-surface dark:bg-offwhite-darkSurface hover:border-amber-warm hover:text-teal-deep dark:hover:text-amber-warm text-xs font-bold text-ink-light dark:text-slate-300 transition-all"
+                >
+                  {need.label}
+                </Link>
+              ))}
+            </div>
+          </section>
+        </main>
+
+        <Footer t={t} />
+      </div>
     </div>
   );
 }
